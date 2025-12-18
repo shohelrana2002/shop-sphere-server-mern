@@ -186,3 +186,32 @@ export const resetPassword = async (req, res) => {
       .json({ message: "resetPassword error", error: error.message });
   }
 };
+
+// google auth controls
+
+export const googleAuthControls = async (req, res) => {
+  try {
+    const { fullName, mobile, email, role } = req.body;
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        fullName,
+        email,
+        mobile,
+        role: "user",
+      });
+    }
+    const token = await generateToken(user?._id);
+    res.cookie("token", token, {
+      secure: false,
+      httpOnly: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+    return res.json(user);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Google SingUp Failed", error: error.message });
+  }
+};
