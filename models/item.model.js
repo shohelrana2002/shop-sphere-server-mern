@@ -57,7 +57,6 @@ export const itemSchema = new mongoose.Schema(
     },
     stock: {
       type: Number,
-      required: true,
     },
   },
   { timestamps: true }

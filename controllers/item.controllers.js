@@ -21,7 +21,10 @@ export const addItem = async (req, res) => {
       image,
       shop: shop._id,
     });
-    return res.status(201).json(item);
+    shop.items.push(item?._id);
+    await shop.save();
+    await shop.populate("items owner");
+    return res.status(201).json(shop);
   } catch (error) {
     return res
       .status(500)
@@ -30,7 +33,6 @@ export const addItem = async (req, res) => {
 };
 
 // edit item
-
 export const editItem = async (req, res) => {
   try {
     const itemId = req.params.itemId;
@@ -57,5 +59,40 @@ export const editItem = async (req, res) => {
     return res.status(200).json(item);
   } catch (error) {
     return res.status(500).json({ message: `Item Edit failed :${error}` });
+  }
+};
+// get item by id
+export const getItemById = async (req, res) => {
+  try {
+    const itemId = req.params.itemId;
+    if (!itemId) {
+      return res.status(400).json({ message: "Invalid Item Id" });
+    }
+    const result = await Item.findById(itemId);
+    if (!result) {
+      return res.status(400).json({ message: "Cant Find Item Id" });
+    }
+    return res.status(200).json(result);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: `Cant't Get Single Item :${error}` });
+  }
+};
+// get item
+export const getItemAll = async (req, res) => {
+  try {
+    // const { shopId } = req.params;
+
+    const items = await Item.find({})
+      .populate("shop", "name image")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(items);
+  } catch (error) {
+    res.status(500).json({
+      message: "Item get failed",
+      error: error.message,
+    });
   }
 };
