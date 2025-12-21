@@ -79,6 +79,26 @@ export const getItemById = async (req, res) => {
       .json({ message: `Cant't Get Single Item :${error}` });
   }
 };
+
+// delete item
+export const deleteItemById = async (req, res) => {
+  try {
+    const itemId = req.params.itemId;
+    if (!itemId) {
+      return res.status(400).json({ message: "Invalid Item Id" });
+    }
+    const result = await Item.findByIdAndDelete(itemId);
+    if (!result) {
+      return res.status(400).json({ message: "Cant Find Item Id" });
+    }
+    return res.status(200).json(result);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: `Cant't Get Delete Item :${error}` });
+  }
+};
+
 // get item
 export const getItemAll = async (req, res) => {
   try {
