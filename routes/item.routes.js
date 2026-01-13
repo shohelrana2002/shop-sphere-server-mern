@@ -5,15 +5,17 @@ import {
   deleteItemById,
   editItem,
   getItemAll,
+  getItemByCity,
   getItemById,
 } from "../controllers/item.controllers.js";
 import { upload } from "../middlewares/multer.js";
 const itemRouter = express.Router();
 
+itemRouter.get("/allItems-get", getItemAll);
 itemRouter.post("/add-item", isAuth, upload.single("image"), addItem);
 itemRouter.put("/edit-item/:itemId", isAuth, upload.single("image"), editItem);
-itemRouter.get("/get-item/:itemId", getItemById);
-itemRouter.delete("/delete-item/:itemId", deleteItemById);
-itemRouter.get("/allItems-get", getItemAll);
+itemRouter.get("/get-item/:itemId", isAuth, getItemById);
+itemRouter.delete("/delete-item/:itemId", isAuth, deleteItemById);
+itemRouter.get("/get-by-city/:city", isAuth, getItemByCity);
 
 export default itemRouter;

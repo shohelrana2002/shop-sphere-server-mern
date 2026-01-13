@@ -1,6 +1,10 @@
 import express from "express";
 import { isAuth } from "../middlewares/isAuth.js";
-import { creteOrEditShop, getMyShop } from "../controllers/shop.controllers.js";
+import {
+  creteOrEditShop,
+  getMyShop,
+  getShopByCity,
+} from "../controllers/shop.controllers.js";
 import { upload } from "../middlewares/multer.js";
 const shopRouter = express.Router();
 
@@ -11,5 +15,6 @@ shopRouter.post(
   creteOrEditShop
 );
 shopRouter.get("/get-myShop", isAuth, getMyShop);
+shopRouter.get("/get-By-city/:city", isAuth, getShopByCity);
 
 export default shopRouter;
