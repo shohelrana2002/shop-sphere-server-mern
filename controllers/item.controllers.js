@@ -56,7 +56,11 @@ export const editItem = async (req, res) => {
     if (!item) {
       return res.status(400).json({ message: "Item Can't find " });
     }
-    return res.status(200).json(item);
+    const shop = await Shop.findOne({ owner: req.userId }).populate({
+      path: "items",
+      options: { sort: { updatedAt: -1 } },
+    });
+    return res.status(200).json(shop);
   } catch (error) {
     return res.status(500).json({ message: `Item Edit failed :${error}` });
   }
@@ -87,11 +91,19 @@ export const deleteItemById = async (req, res) => {
     if (!itemId) {
       return res.status(400).json({ message: "Invalid Item Id" });
     }
-    const result = await Item.findByIdAndDelete(itemId);
-    if (!result) {
+    const item = await Item.findByIdAndDelete(itemId);
+    if (!item) {
       return res.status(400).json({ message: "Cant Find Item Id" });
     }
-    return res.status(200).json(result);
+
+    // const shop = await Shop.findOne({ owner: req?.userId });
+    // shop.items = shop?.items?.filter((i) => i?._id !== item?._id);
+    // await shop.save();
+    // await shop.populate({
+    //   path: "items",
+    //   options: { sort: { updatedAt: -1 } },
+    // });
+    return res.status(200).json(item);
   } catch (error) {
     return res
       .status(500)
