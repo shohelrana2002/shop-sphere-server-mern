@@ -58,8 +58,12 @@ export const itemSchema = new mongoose.Schema(
     stock: {
       type: Number,
     },
+    rating: {
+      average: { type: Number, default: 0 },
+      count: { type: Number, default: 0 },
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Item = mongoose.model("Item", itemSchema);
