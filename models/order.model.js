@@ -59,6 +59,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["PENDING", "PAID", "FAILED"],
       default: "PENDING",
     },
+    transactionId: String,
   },
   { timestamps: true },
 );

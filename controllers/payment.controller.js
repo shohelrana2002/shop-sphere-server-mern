@@ -99,15 +99,13 @@ export const sslcommerzInit = async (req, res) => {
 // Success, Fail, Cancel endpoints
 export const paymentSuccess = async (req, res) => {
   const { tran_id } = req.params;
-
-  await paymentHistoryModel.findOneAndUpdate(
-    { transactionId: tran_id },
-    { status: "PAID" },
-  );
-
   await Order.findOneAndUpdate(
     { transactionId: tran_id },
     { paymentStatus: "PAID" },
+  );
+  await paymentHistoryModel.findOneAndUpdate(
+    { transactionId: tran_id },
+    { status: "PAID" },
   );
 
   res.redirect(`http://localhost:5173/payment-success/${tran_id}`);
