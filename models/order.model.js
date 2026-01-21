@@ -7,6 +7,8 @@ const shopOrderItemSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Item",
     },
+    name: String,
+    image: String,
     price: Number,
     quantity: Number,
   },

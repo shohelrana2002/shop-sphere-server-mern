@@ -57,6 +57,33 @@ export const sslcommerzInit = async (req, res) => {
     const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
 
     const apiResponse = await sslcz.init(data);
+    ///
+
+    const groupedByShop = {};
+
+    cartItems.forEach((item) => {
+      const shopId = item.shop._id || item.shop;
+
+      if (!groupedByShop[shopId]) {
+        groupedByShop[shopId] = {
+          shop: shopId,
+          owner: item.shop.owner,
+          subTotal: 0,
+          shopOrderItem: [],
+        };
+      }
+
+      groupedByShop[shopId].shopOrderItem.push({
+        item: item._id,
+        price: item.price,
+        name: item.name,
+        quantity: item.quantity,
+        image: item.image,
+      });
+
+      groupedByShop[shopId].subTotal += item.price * item.quantity;
+    });
+    const shopOrder = Object.values(groupedByShop);
 
     // Save order in MongoDB
     const order = await Order.create({
@@ -68,7 +95,7 @@ export const sslcommerzInit = async (req, res) => {
         longitude: location[1] || 0,
       },
       totalAmount: Number(totalPrice),
-      shopOrder: cartItems || [],
+      shopOrder: shopOrder || [],
       paymentStatus: "PENDING",
       transactionId: tran_id,
     });

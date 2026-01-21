@@ -6,11 +6,11 @@ import {
   paymentCancel,
 } from "../controllers/payment.controller.js";
 
-const router = express.Router();
+const paymentRouter = express.Router();
 
-router.post("/sslcommerz", sslcommerzInit);
-router.post("/success/:tran_id", paymentSuccess);
-router.post("/fail/:tran_id", paymentFail);
-router.post("/cancel/:tran_id", paymentCancel);
+paymentRouter.post("/sslcommerz", sslcommerzInit);
+paymentRouter.post("/success/:tran_id", paymentSuccess);
+paymentRouter.post("/fail/:tran_id", paymentFail);
+paymentRouter.post("/cancel/:tran_id", paymentCancel);
 
-export default router;
+export default paymentRouter;
