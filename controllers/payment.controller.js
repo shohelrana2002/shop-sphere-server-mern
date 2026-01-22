@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 import Order from "../models/order.model.js";
 import paymentHistoryModel from "../models/paymentHistory.model.js";
+import Shop from "../models/shop.model.js";
 
 dotenv.config();
 
@@ -59,45 +60,93 @@ export const sslcommerzInit = async (req, res) => {
     const apiResponse = await sslcz.init(data);
     ///
 
-    const groupedByShop = {};
+    // const groupedByShop = {};
 
-    cartItems.forEach((item) => {
-      const shopId = item.shop._id || item.shop;
+    // cartItems.forEach((item) => {
+    //   const shopId = item.shop._id || item.shop;
 
-      if (!groupedByShop[shopId]) {
-        groupedByShop[shopId] = {
-          shop: shopId,
-          owner: item.shop.owner,
-          subTotal: 0,
-          shopOrderItem: [],
-        };
-      }
+    //   if (!groupedByShop[shopId]) {
+    //     groupedByShop[shopId] = {
+    //       shop: shopId,
+    //       owner: item.shop.owner,
+    //       subTotal: 0,
+    //       shopOrderItem: [],
+    //     };
+    //   }
 
-      groupedByShop[shopId].shopOrderItem.push({
-        item: item._id,
-        price: item.price,
-        name: item.name,
-        quantity: item.quantity,
-        image: item.image,
-      });
+    //   groupedByShop[shopId].shopOrderItem.push({
+    //     item: item._id,
+    //     price: item.price,
+    //     name: item.name,
+    //     quantity: item.quantity,
+    //     image: item.image,
+    //   });
 
-      groupedByShop[shopId].subTotal += item.price * item.quantity;
-    });
-    const shopOrder = Object.values(groupedByShop);
+    //   groupedByShop[shopId].subTotal += item.price * item.quantity;
+    // });
+    // const shopOrder = Object.values(groupedByShop);
 
     // Save order in MongoDB
+    // const order = await Order.create({
+    //   user: userData._id,
+    //   paymentMethod: (paymentMethod || "online").toLowerCase(), // lowercase
+    //   deliveryAddress: {
+    //     text: address,
+    //     latitude: location[0] || 0,
+    //     longitude: location[1] || 0,
+    //   },
+    //   totalAmount: Number(totalPrice),
+    //   shopOrder: shopOrder || [],
+    //   paymentStatus: "PENDING",
+    //   transactionId: tran_id,
+    // });
+    const groupItemsByShop = {};
+    cartItems.forEach((item) => {
+      const shopId = item.shop;
+      if (!groupItemsByShop[shopId]) {
+        groupItemsByShop[shopId] = [];
+      }
+      groupItemsByShop[shopId].push(item);
+    });
+
+    const shopOrder = await Promise.all(
+      Object.keys(groupItemsByShop).map(async (shopId) => {
+        const shop = await Shop.findById(shopId).populate("owner");
+        if (!shop) {
+          return res.status(400).json({ message: "No Shop Data  Found !!" });
+        }
+        const items = groupItemsByShop[shopId];
+        const subTotal = items.reduce(
+          (sum, i) => sum + Number(i?.price) * Number(i?.quantity),
+          0,
+        );
+        return {
+          shop: shop?._id,
+          owner: shop?.owner?._id,
+          subTotal,
+          shopOrderItem: items.map((i) => ({
+            item: i._id,
+            name: i.name,
+            image: i.image,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+        };
+      }),
+    );
+    // order crete now
+
     const order = await Order.create({
-      user: userData._id,
-      paymentMethod: (paymentMethod || "online").toLowerCase(), // lowercase
+      user: req.userId,
+      paymentMethod: (paymentMethod || "online").toLowerCase(),
       deliveryAddress: {
         text: address,
         latitude: location[0] || 0,
         longitude: location[1] || 0,
       },
-      totalAmount: Number(totalPrice),
-      shopOrder: shopOrder || [],
-      paymentStatus: "PENDING",
       transactionId: tran_id,
+      totalAmount: totalPrice,
+      shopOrder,
     });
     // Payment History
     await paymentHistoryModel.create({

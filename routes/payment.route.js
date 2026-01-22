@@ -5,10 +5,11 @@ import {
   paymentFail,
   paymentCancel,
 } from "../controllers/payment.controller.js";
+import { isAuth } from "../middlewares/isAuth.js";
 
 const paymentRouter = express.Router();
 
-paymentRouter.post("/sslcommerz", sslcommerzInit);
+paymentRouter.post("/sslcommerz", isAuth, sslcommerzInit);
 paymentRouter.post("/success/:tran_id", paymentSuccess);
 paymentRouter.post("/fail/:tran_id", paymentFail);
 paymentRouter.post("/cancel/:tran_id", paymentCancel);
