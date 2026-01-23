@@ -125,7 +125,7 @@ export const sslcommerzInit = async (req, res) => {
           owner: shop?.owner?._id,
           subTotal,
           shopOrderItem: items.map((i) => ({
-            item: i._id,
+            item: i.id,
             name: i.name,
             image: i.image,
             price: i.price,

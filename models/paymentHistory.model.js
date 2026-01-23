@@ -27,7 +27,7 @@ const paymentHistorySchema = new mongoose.Schema(
 
     paymentGateway: {
       type: String,
-      default: "SSLCommerz",
+      default: "ONLINE",
     },
 
     status: {

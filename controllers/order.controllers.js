@@ -1,6 +1,7 @@
 import Order from "../models/order.model.js";
 import paymentHistoryModel from "../models/paymentHistory.model.js";
 import Shop from "../models/shop.model.js";
+import User from "../models/user.model.js";
 
 export const placeOrder = async (req, res) => {
   try {
@@ -38,7 +39,7 @@ export const placeOrder = async (req, res) => {
           owner: shop?.owner?._id,
           subTotal,
           shopOrderItem: items.map((i) => ({
-            item: i._id,
+            item: i.id,
             name: i.name,
             image: i.image,
             price: i.price,
@@ -48,7 +49,7 @@ export const placeOrder = async (req, res) => {
       }),
     );
     // order crete now
-
+    const random = Math.floor(1000 + Math.random() * 900000);
     const newOrder = await Order.create({
       user: req.userId,
       paymentMethod: paymentMethod.toLowerCase() || "cod",
@@ -57,6 +58,7 @@ export const placeOrder = async (req, res) => {
         latitude: location[0] || 0,
         longitude: location[1] || 0,
       },
+      transactionId: `COD:${req.userId.toString().slice(0, 6)}${random}`,
       totalAmount,
       shopOrder,
     });
@@ -65,7 +67,7 @@ export const placeOrder = async (req, res) => {
       user: req.userId,
       order: newOrder._id,
       paymentGateway: "COD",
-      transactionId: `COD:${newOrder._id?.toString().slice(0, 8)}`,
+      transactionId: `COD:${req.userId.toString().slice(0, 6)}${random}`,
       amount: Number(totalAmount),
       status: "PENDING",
     });
@@ -78,17 +80,44 @@ export const placeOrder = async (req, res) => {
 
 export const getMyOrders = async (req, res) => {
   try {
-    const userId = req.userId;
+    const user = await User.findById(req.userId);
+    if (user.role === "user") {
+      const orders = await Order.find({ user: req.userId })
+        .sort({ createdAt: -1 })
+        .populate("shopOrder.shop", "name")
+        .populate("shopOrder.owner", "name email mobile")
+        .populate("shopOrder.shopOrderItem.item", "name image price");
 
-    const orders = await Order.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .lean();
+      return res.status(200).json(orders);
+    } else if (user.role === "owner") {
+      let orders = await Order.find({ "shopOrder.owner": req.userId })
+        .sort({ createdAt: -1 })
+        .populate("shopOrder.shop", "name")
+        .populate("user")
+        .populate("shopOrder.shopOrderItem.item", "name image price");
 
-    return res.status(200).json({
-      success: true,
-      count: orders.length,
-      orders,
-    });
+      //  filter shopOrder for this owner only
+      orders = orders.map((order) => {
+        const filteredShopOrder = order?.shopOrder?.filter(
+          (shop) => shop?.owner?.toString() === req?.userId?.toString(),
+        );
+
+        return {
+          ...order.toObject(),
+          shopOrder: filteredShopOrder,
+        };
+      });
+
+      return res.status(200).json(orders);
+    }
+    //else if (user.role === "owner") {
+    //   const orders = await Order.find({ "shopOrder.owner": req.userId })
+    //     .sort({ createdAt: -1 })
+    //     .populate("shopOrder.shop", "name")
+    //     .populate("user")
+    //     .populate("shopOrder.shopOrderItem.item", "name image price");
+    //   return res.status(200).json(orders);
+    // }
   } catch (error) {
     console.error("Get my orders error:", error);
     res.status(500).json({
