@@ -62,7 +62,7 @@ export const placeOrder = async (req, res) => {
       totalAmount,
       shopOrder,
     });
-
+    await newOrder.populate("shopOrder.shopOrderItem.item", "name image price");
     await paymentHistoryModel.create({
       user: req.userId,
       order: newOrder._id,
@@ -110,19 +110,32 @@ export const getMyOrders = async (req, res) => {
 
       return res.status(200).json(orders);
     }
-    //else if (user.role === "owner") {
-    //   const orders = await Order.find({ "shopOrder.owner": req.userId })
-    //     .sort({ createdAt: -1 })
-    //     .populate("shopOrder.shop", "name")
-    //     .populate("user")
-    //     .populate("shopOrder.shopOrderItem.item", "name image price");
-    //   return res.status(200).json(orders);
-    // }
   } catch (error) {
     console.error("Get my orders error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch orders",
-    });
+    res.status(500).json({ message: `Failed to fetch orders error:${error}` });
+  }
+};
+
+export const ordersStatusUpdate = async (req, res) => {
+  try {
+    const { status, shopId } = req.body; // shopId
+    const orderId = req.params.orderId;
+
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    // find correct shop order
+    const shopOrder = order.shopOrder.find((s) => s.shop.toString() === shopId);
+
+    if (!shopOrder)
+      return res.status(404).json({ message: "Shop order not found" });
+
+    shopOrder.status = status; // correct place
+
+    await order.save();
+
+    res.status(200).json({ success: true, status });
+  } catch (error) {
+    res.status(500).json({ message: `Status Updated error: ${error}` });
   }
 };
