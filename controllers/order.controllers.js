@@ -124,15 +124,15 @@ export const ordersStatusUpdate = async (req, res) => {
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    // find correct shop order
+    /* find correct shop order*/
     const shopOrder = order.shopOrder.find((s) => s.shop.toString() === shopId);
 
     if (!shopOrder)
       return res.status(404).json({ message: "Shop order not found" });
 
-    shopOrder.status = status; // correct place
-
+    shopOrder.status = status;
     await order.save();
+    // await order.populate("shopOrder.shop", "name");
 
     res.status(200).json({ success: true, status });
   } catch (error) {

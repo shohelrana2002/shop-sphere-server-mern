@@ -33,6 +33,11 @@ const shopOrderSchema = new mongoose.Schema(
       default: "pending",
     },
     shopOrderItem: [shopOrderItemSchema],
+    assignment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DeliveryAssignment",
+      default: null,
+    },
   },
   { timestamps: true },
 );
