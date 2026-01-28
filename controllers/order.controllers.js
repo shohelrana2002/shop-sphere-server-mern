@@ -131,6 +131,7 @@ export const ordersStatusUpdate = async (req, res) => {
       return res.status(404).json({ message: "Shop order not found" });
 
     shopOrder.status = status;
+
     await order.save();
     // await order.populate("shopOrder.shop", "name");
 
