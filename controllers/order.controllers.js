@@ -1,3 +1,4 @@
+import DeliveryAssignment from "../models/deliveryAssignment.model.js";
 import Order from "../models/order.model.js";
 import paymentHistoryModel from "../models/paymentHistory.model.js";
 import Shop from "../models/shop.model.js";
@@ -118,7 +119,7 @@ export const getMyOrders = async (req, res) => {
 
 export const ordersStatusUpdate = async (req, res) => {
   try {
-    const { status, shopId } = req.body; // shopId
+    const { status, shopId } = req.body; // shopId status
     const orderId = req.params.orderId;
 
     const order = await Order.findById(orderId);
@@ -131,11 +132,67 @@ export const ordersStatusUpdate = async (req, res) => {
       return res.status(404).json({ message: "Shop order not found" });
 
     shopOrder.status = status;
+    // location to Delivery Boy Find Here
+    let deliveryBoysPayLoad = [];
+    if (status === "out of delivery" && !shopOrder.assignment) {
+      const { longitude, latitude } = order.deliveryAddress;
+      const nearByDeliveryBoys = await User.find({
+        role: "deliveryBoy",
+        location: {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: [Number(longitude), Number(latitude)],
+            },
+            $maxDistance: 100000, // 1km= 1000 ====100km
+          },
+        },
+      });
 
+      const nearByIds = nearByDeliveryBoys.map((nearId) => nearId._id);
+      const busyIds = await DeliveryAssignment.find({
+        assignedTo: { $in: nearByIds },
+        status: { $nin: ["broadcasted", "completed"] },
+      }).distinct("assignedTo");
+      const busyIdSet = new Set(busyIds.map((id) => String(id)));
+      const availableBoys = nearByDeliveryBoys.filter(
+        (b) => !busyIdSet.has(String(b._id)),
+      );
+      const candidates = availableBoys.map((b) => b._id);
+      if (candidates.length === 0) {
+        await order.save();
+        return res.json({ message: "No Available Delivery Boy" });
+      }
+      const deliveryAssignment = await DeliveryAssignment.create({
+        order: order._id,
+        shop: shopOrder.shop,
+        shopOrderId: shopOrder._id,
+        broadcastedTo: candidates,
+        status: "broadcasted",
+      });
+      shopOrder.assignedDeliveryBoy = deliveryAssignment.assignedTo;
+      shopOrder.assignment = deliveryAssignment._id;
+      deliveryBoysPayLoad = availableBoys.map((b) => ({
+        id: b._id,
+        fullName: b.fullName,
+        longitude: b.location.coordinates?.[0] || 0,
+        latitude: b.location.coordinates?.[1] || 0,
+        mobile: b.mobile,
+      }));
+    }
     await order.save();
-    // await order.populate("shopOrder.shop", "name");
+    const updatedShopOrder = order.shopOrder.find(
+      (s) => s.shop._id.toString() === shopId.toString(),
+    );
+    await order.populate("shopOrder.shop", "name");
+    await order.populate("shopOrder.assignedDeliveryBoy"); // fullName email mobile
 
-    res.status(200).json({ success: true, status });
+    res.status(200).json({
+      shopOrder: updatedShopOrder,
+      assignedDeliveryBoy: updatedShopOrder.assignedDeliveryBoy,
+      availableBoys: deliveryBoysPayLoad,
+      assignment: updatedShopOrder?.assignment?._id,
+    });
   } catch (error) {
     res.status(500).json({ message: `Status Updated error: ${error}` });
   }
