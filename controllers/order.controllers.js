@@ -197,3 +197,33 @@ export const ordersStatusUpdate = async (req, res) => {
     res.status(500).json({ message: `Status Updated error: ${error}` });
   }
 };
+
+/* =========== Get Assignment ====== */
+
+export const getDeliveryBoyAssignment = async (req, res) => {
+  try {
+    const deliveryBoyId = req.userId;
+    const assignment = await DeliveryAssignment.find({
+      broadcastedTo: deliveryBoyId,
+      status: "broadcasted",
+    })
+      .populate("order")
+      .populate("shop");
+    const format = assignment.map((a) => ({
+      assignmentId: a._id,
+      orderId: a.order._id,
+      shopName: a.shop.name,
+      deliveryAddress: a.order.deliveryAddress,
+      items:
+        a.order.shopOrder.find((item) => (item._id = a.shopOrderId))
+          .shopOrderItem || [],
+      subTotal: a.order.shopOrder.find((item) => (item._id = a.shopOrderId))
+        ?.subTotal,
+    }));
+    return res.status(200).json(format);
+  } catch (error) {
+    return res.status(500).json({
+      message: `Get Delivery Assignment Error:${error}`,
+    });
+  }
+};
