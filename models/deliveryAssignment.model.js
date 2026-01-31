@@ -29,6 +29,7 @@ const deliveryAssignmentSchema = new mongoose.Schema(
       default: "broadcasted",
     },
     acceptedAt: Date,
+    rejectedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true },
 );

@@ -227,3 +227,87 @@ export const getDeliveryBoyAssignment = async (req, res) => {
     });
   }
 };
+
+/* =========== Accept Assignment Delivery Boy Order ====== */
+
+export const acceptOrder = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+    const assignment = await DeliveryAssignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(400).json({ message: "No Assignment Order Find" });
+    }
+    if (assignment.status !== "broadcasted") {
+      return res.status(400).json({ message: "Assignment is Expired" });
+    }
+
+    const alreadyAssigned = await DeliveryAssignment.findOne({
+      assignedTo: req.userId,
+      status: { $nin: ["broadcasted", "completed"] },
+    });
+    if (alreadyAssigned) {
+      return res
+        .status(400)
+        .json({ message: "You Are Already Assigned to Another Order" });
+    }
+    assignment.assignedTo = req.userId;
+    assignment.status = "assigned";
+    assignment.acceptedAt = new Date();
+    await assignment.save();
+    const order = await Order.findById(assignment.order);
+    if (!order) {
+      return res.status(400).json({ message: "Order no't Find" });
+    }
+    const shopOrder = order.shopOrder.find(
+      (shop) => shop._id.toString() === assignment.shopOrderId.toString(),
+    );
+
+    if (!shopOrder) {
+      return res.status(400).json({ message: "Shop order not found" });
+    }
+
+    shopOrder.assignedDeliveryBoy = req.userId;
+
+    await order.save();
+    await order.populate("shopOrder.assignedDeliveryBoy");
+    return res.status(200).json({
+      message: "Order Accepted",
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: `Accept Order Delivery Boy Error :${error}` });
+  }
+};
+export const rejectOrder = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+
+    const assignment = await DeliveryAssignment.findById(assignmentId);
+
+    if (!assignment) {
+      return res.status(400).json({ message: "Assignment not found" });
+    }
+
+    // Already accepted?
+    if (assignment.status !== "broadcasted") {
+      return res.status(400).json({ message: "Assignment not available" });
+    }
+
+    // Prevent duplicate reject
+    if (assignment.rejectedBy.includes(req.userId)) {
+      return res.status(400).json({ message: "Already rejected" });
+    }
+
+    assignment.rejectedBy.push(req.userId);
+    await assignment.save();
+
+    return res.status(200).json({
+      message: "Order rejected. Waiting for other riders.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: `Reject Order Error: ${error.message}`,
+    });
+  }
+};
