@@ -6,6 +6,7 @@ import {
   getCurrentOrder,
   getDeliveryBoyAssignment,
   getMyOrders,
+  getOrderById,
   ordersStatusUpdate,
   placeOrder,
   rejectOrder,
@@ -18,7 +19,8 @@ orderRouter.get("/get-assignments", isAuth, getDeliveryBoyAssignment);
 orderRouter.get("/get-current-order", isAuth, getCurrentOrder);
 orderRouter.post("/place-orders", isAuth, placeOrder);
 orderRouter.put("/update-status/:orderId", isAuth, ordersStatusUpdate);
-orderRouter.get("/accept-order/:assignmentId", isAuth, acceptOrder);
 orderRouter.post("/reject/:assignmentId", isAuth, rejectOrder);
+orderRouter.get("/accept-order/:assignmentId", isAuth, acceptOrder);
+orderRouter.get("/get-order-by-id/:orderId", isAuth, getOrderById);
 
 export default orderRouter;

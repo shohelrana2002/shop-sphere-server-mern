@@ -366,3 +366,32 @@ export const getCurrentOrder = async (req, res) => {
     });
   }
 };
+
+/*=========== EGt Order By Id ======== */
+
+export const getOrderById = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId)
+      .populate("user")
+      .populate({
+        path: "shopOrder.shop",
+        model: "Shop",
+      })
+      .populate({
+        path: "shopOrder.assignedDeliveryBoy",
+        model: "User",
+      })
+      .populate({
+        path: "shopOrder.shopOrderItem.item",
+        model: "Item",
+      })
+      .lean();
+    if (!order) {
+      return res.status(400).json({ message: "No Order Found" });
+    }
+    return res.status(200).json(order);
+  } catch (error) {
+    return res.status(500).json({ message: `Get Order By Id Error:${error}` });
+  }
+};
