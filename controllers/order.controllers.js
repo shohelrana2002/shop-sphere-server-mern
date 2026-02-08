@@ -439,7 +439,7 @@ export const deliveryOtpVerify = async (req, res) => {
     ) {
       return res.status(400).json({ message: "Otp Invalid or Otp Expire" });
     }
-    //no class
+    //no class hhh
     shopOrder.status = "delivered";
     shopOrder.deliveryAt = new Date();
     shopOrder.deliveryOtp = null;
