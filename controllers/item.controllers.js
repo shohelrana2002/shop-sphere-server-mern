@@ -50,7 +50,7 @@ export const editItem = async (req, res) => {
         stock,
         image,
       },
-      { new: true }
+      { new: true },
     );
 
     if (!item) {
@@ -148,5 +148,25 @@ export const getItemByCity = async (req, res) => {
     return res.status(200).json(items);
   } catch (error) {
     return res.status(500).json({ message: `Get Item By City Error:${error}` });
+  }
+};
+
+//  Get Item By Shop Id
+
+export const getItemsByShopId = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const shop = await Shop.findById(shopId).populate("items");
+    if (!shop) {
+      return res.status(400).json({ message: "No Shop Find " });
+    }
+    return res.status(200).json({
+      shop,
+      items: shop.items,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: `Get Item By Shop Id error :${error}` });
   }
 };
