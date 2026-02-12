@@ -8,6 +8,7 @@ import {
   getItemByCity,
   getItemById,
   getItemsByShopId,
+  searchItems,
 } from "../controllers/item.controllers.js";
 import { upload } from "../middlewares/multer.js";
 const itemRouter = express.Router();
