@@ -19,5 +19,6 @@ itemRouter.get("/get-item/:itemId", isAuth, getItemById);
 itemRouter.delete("/delete-item/:itemId", isAuth, deleteItemById);
 itemRouter.get("/get-by-city/:city", isAuth, getItemByCity);
 itemRouter.get("/get-by-shop-id/:shopId", isAuth, getItemsByShopId);
+itemRouter.get("/search-items", isAuth, searchItems);
 
 export default itemRouter;
