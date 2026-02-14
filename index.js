@@ -11,8 +11,22 @@ import shopRouter from "./routes/shop.routes.js";
 import itemRouter from "./routes/item.routes.js";
 import paymentRouter from "./routes/payment.route.js";
 import orderRouter from "./routes/order.route.js";
+import http from "http";
+import { Server } from "socket.io";
+import { socketHandler } from "./socket.js";
 
 const app = express();
+// socket io crete http
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    credentials: true,
+    methods: ["POST", "GET"],
+  },
+});
+app.set("io", io);
+
 const PORT = process.env.PORT || 5000;
 
 /* ========== CORS Configuration ========== */
@@ -33,6 +47,8 @@ app.use("/api/item", itemRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/orders", orderRouter);
 
+/* ========== socket io call here ========== */
+socketHandler(io);
 /* ========== Test Route ========== */
 app.get("/", (req, res) => {
   res.send("API is running 🚀");
@@ -40,7 +56,7 @@ app.get("/", (req, res) => {
 
 /* ========== Server ========== */
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   connectDB();
   console.log(`🚀 Server running on port ${PORT}`);
 });
