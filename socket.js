@@ -20,10 +20,15 @@ export const socketHandler = (io) => {
     //  disconnect to user offline
     socket.on("disconnect", async () => {
       try {
-        await User.findByIdAndUpdate(
+        await User.findOneAndUpdate(
           { socketId: socket.id },
           { socketId: null, isOnline: false },
         );
+
+        // await User.findByIdAndUpdate(
+        //   { socketId: socket.id },
+        //   { socketId: null, isOnline: false },
+        // );
       } catch (error) {
         console.log(error);
       }

@@ -65,6 +65,7 @@ export const placeOrder = async (req, res) => {
       shopOrder,
     });
     await newOrder.populate("shopOrder.shopOrderItem.item", "name image price");
+    await newOrder.populate("user", "name email mobile");
     await paymentHistoryModel.create({
       user: req.userId,
       order: newOrder._id,
@@ -73,7 +74,23 @@ export const placeOrder = async (req, res) => {
       amount: Number(totalAmount),
       status: "PENDING",
     });
-
+    const io = req.app.get("io");
+    if (io) {
+      newOrder.shopOrder.forEach((shopOrders) => {
+        const ownerSocketId = shopOrders.owner.socketId;
+        if (ownerSocketId) {
+          io.to(ownerSocketId).emit("newOrder", {
+            _id: newOrder._id,
+            paymentMethod: newOrder.paymentMethod,
+            user: newOrder.user,
+            shopOrder: shopOrders,
+            createdAt: newOrder.createdAt,
+            deliveryAddress: newOrder.deliveryAddress,
+            payment: newOrder.paymentStatus,
+          });
+        }
+      });
+    }
     return res.status(201).json(newOrder);
   } catch (error) {
     return res.status(500).json({ message: `Place Order Error:${error}` });
