@@ -1,5 +1,5 @@
 import User from "./models/user.model.js";
-
+// connection error fetch
 export const socketHandler = (io) => {
   io.on("connection", (socket) => {
     socket.on("identity", async ({ userId }) => {
@@ -12,7 +12,6 @@ export const socketHandler = (io) => {
           },
           { new: true },
         );
-        console.log(user);
       } catch (error) {
         console.log(error);
       }
