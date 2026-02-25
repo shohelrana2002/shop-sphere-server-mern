@@ -1,5 +1,5 @@
 import User from "./models/user.model.js";
-// connection error fetch
+
 export const socketHandler = (io) => {
   io.on("connection", (socket) => {
     socket.on("identity", async ({ userId }) => {
@@ -12,24 +12,21 @@ export const socketHandler = (io) => {
           },
           { new: true },
         );
+        console.log("User Online:", user?.socketId);
       } catch (error) {
-        console.log(error);
+        console.log("Identity Error:", error);
       }
     });
-    //  disconnect to user offline
+
     socket.on("disconnect", async () => {
       try {
         await User.findOneAndUpdate(
           { socketId: socket.id },
           { socketId: null, isOnline: false },
         );
-
-        // await User.findByIdAndUpdate(
-        //   { socketId: socket.id },
-        //   { socketId: null, isOnline: false },
-        // );
+        console.log("User Disconnected:", socket.id);
       } catch (error) {
-        console.log(error);
+        console.log("Disconnect Error:", error);
       }
     });
   });
