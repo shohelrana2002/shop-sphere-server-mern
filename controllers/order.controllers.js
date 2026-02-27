@@ -75,7 +75,7 @@ export const placeOrder = async (req, res) => {
       amount: Number(totalAmount),
       status: "PENDING",
     });
-    // socket sever
+    // socket sever error
     const io = req.app.get("io");
     // newOrder.shopOrder.forEach((shop) => {
     //   const ownerSocketId = shop.owner.socketId;
