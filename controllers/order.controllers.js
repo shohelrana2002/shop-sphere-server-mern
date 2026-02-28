@@ -64,9 +64,10 @@ export const placeOrder = async (req, res) => {
       totalAmount,
       shopOrder,
     });
-    await newOrder.populate("shopOrder.shopOrderItem.item", "name image price");
+    await newOrder.populate("shopOrder.shopOrderItem.item");
     await newOrder.populate("user", "name email mobile");
     await newOrder.populate("shopOrder.owner", "name email socketId");
+    console.log("socket id:", newOrder.shopOrder[0].owner.socketId);
     await paymentHistoryModel.create({
       user: req.userId,
       order: newOrder._id,
@@ -77,35 +78,34 @@ export const placeOrder = async (req, res) => {
     });
     // socket sever error
     const io = req.app.get("io");
-    // newOrder.shopOrder.forEach((shop) => {
-    //   const ownerSocketId = shop.owner.socketId;
-
-    //   if (ownerSocketId) {
-    //     io.to(ownerSocketId).emit("newOrder", {
-    //       ...newOrder.toObject(),
-    //       shopOrder: newOrder.shopOrder.filter(
-    //         (s) => s.owner._id.toString() === shop.owner._id.toString(),
-    //       ),
-    //     });
-    //   }
-    // });
-
     if (io) {
-      newOrder.shopOrder.forEach((shopOrders) => {
-        const ownerSocketId = shopOrders.owner.socketId;
+      newOrder.shopOrder.forEach((shop) => {
+        const ownerSocketId = shop.owner?.socketId;
+
         if (ownerSocketId) {
           io.to(ownerSocketId).emit("newOrder", {
-            _id: newOrder._id,
-            paymentMethod: newOrder.paymentMethod,
-            user: newOrder.user,
-            shopOrder: shopOrders,
-            createdAt: newOrder.createdAt,
-            deliveryAddress: newOrder.deliveryAddress,
-            payment: newOrder.paymentStatus,
+            ...newOrder.toObject(),
+            shopOrder: [shop], // array shape maintain
           });
         }
       });
     }
+    // if (io) {
+    //   newOrder.shopOrder.forEach((shopOrder) => {
+    //     const ownerSocketId = shopOrder.owner.socketId;
+    //     if (ownerSocketId) {
+    //       io.to(ownerSocketId).emit("newOrder", {
+    //         _id: newOrder._id,
+    //         paymentMethod: newOrder.paymentMethod,
+    //         user: newOrder.user,
+    //         shopOrder: shopOrder,
+    //         createdAt: newOrder.createdAt,
+    //         deliveryAddress: newOrder.deliveryAddress,
+    //         payment: newOrder.paymentStatus,
+    //       });
+    //     }
+    //   });
+    // }
 
     return res.status(201).json(newOrder);
   } catch (error) {
